@@ -25,16 +25,18 @@ public class Truco {
         }
     }
 
-    public boolean fueCantadoPorCPU() {
-        return jugadorQueCanto instanceof JugadorCPU;
+
+    public boolean fueCantadoPor(Jugador jugador) {
+        return jugadorQueCanto == jugador;
     }
 
 
     public void subirTruco() {
-        if (!enCurso || rechazado || !aceptado) {
+        if (!enCurso || rechazado) {
             System.out.println("⚠️ No se puede subir ahora.");
             return;
         }
+
 
         switch (nivelActual) {
             case TRUCO -> {
@@ -59,8 +61,10 @@ public class Truco {
 
     public void rechazar() {
         this.rechazado = true;
+        this.enCurso = false;
         System.out.println("❌ Truco no aceptado.");
     }
+
 
     public int puntosSiSeAcepta() {
         return switch (nivelActual) {
@@ -117,4 +121,9 @@ public class Truco {
         aceptado = false;
         rechazado = false;
     }
+
+    public boolean puedeSubirTruco(Jugador jugador) {
+        return enCurso && aceptado && nivelActual != NivelTruco.VALECUATRO && jugador != jugadorQueCanto;
+    }
+
 }

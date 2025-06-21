@@ -231,7 +231,7 @@ public class Juego {
                         truco.aceptar();
                         ronda.forzarTurno(turno);
 
-                        if (truco.estaEnCurso() && truco.fueCantadoPorCPU() && turno instanceof JugadorHumano && !yaPreguntadoSubirRetruco) {
+                        if (truco.estaEnCurso() && truco.fueCantadoPor(cpu) && turno instanceof JugadorHumano && !yaPreguntadoSubirRetruco) {
                             yaPreguntadoSubirRetruco = true;
                             if (preguntarAceptacionHumano(turno, "¿Querés subir a Retruco?")) {
                                 truco.subirTruco();
@@ -320,4 +320,18 @@ public class Juego {
     private Jugador obtenerJugadorTurno(Ronda ronda) {
         return ronda.getJugadorActual();
     }
+
+    public Mazo getMazo() {
+        return mazo;
+    }
+
+    public Jugador getJugadorMano() {
+        return mano;
+    }
+
+    public Jugador getJugadorPie() {
+        return pie;
+    }
+
+
 }

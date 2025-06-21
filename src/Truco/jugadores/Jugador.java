@@ -45,10 +45,6 @@ public abstract class Jugador {
         return esMano;
     }
 
-    public void descartarCarta(Carta carta) {
-        cartas.remove(carta);
-    }
-
     public abstract Carta jugarCarta();
 
     public void mostrarCartas() {

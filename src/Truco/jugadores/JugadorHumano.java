@@ -71,4 +71,9 @@ public class JugadorHumano extends Jugador implements Cantante {
         System.out.print(nombre + ", ¿Aceptás el Vale Cuatro? (s/n): ");
         return scanner.nextLine().trim().equalsIgnoreCase("s");
     }
+
+    public Carta jugarCartaDesdeGUI(int indice) {
+        return cartas.remove(indice);
+    }
+
 }

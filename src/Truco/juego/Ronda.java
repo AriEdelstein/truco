@@ -15,6 +15,7 @@ public class Ronda {
     private final List<ResultadoParcial> resultadosManos = new ArrayList<>();
     private final Map<Jugador, List<Carta>> jugadas = new HashMap<>();
 
+    private Jugador ultimoJugadorQueJugo;
     private Jugador jugadorActual;
     private Jugador otroJugador;
 
@@ -26,6 +27,7 @@ public class Ronda {
         this.jugadorPie = jugadorPie;
         this.jugadorActual = jugadorMano;
         this.otroJugador = jugadorPie;
+
     }
 
     public void jugarTurno() {
@@ -36,6 +38,10 @@ public class Ronda {
         if (jugadorActual == jugadorPie && jugadasPie.size() > jugadasMano.size()) return;
 
         Carta jugada = jugadorActual.jugarCarta();
+        if (jugada == null) {
+            System.err.println("⚠️ " + jugadorActual.getNombre() + " no tiene más cartas para jugar.");
+            return;
+        }
         System.out.println("---------------------------------------------");
         System.out.println(jugadorActual.getNombre() + " jugó: " + jugada);
         System.out.println("---------------------------------------------");
@@ -57,10 +63,17 @@ public class Ronda {
         if (jugadasMano.size() == jugadasPie.size()) {
             evaluarMano(jugadasMano.size() - 1);
 
+            // Verificar si se puede cerrar la ronda anticipadamente
             if (verificarCierreAnticipado()) {
                 rondaFinalizada = true;
                 return;
             }
+
+            // Verificar si se completaron las 3 jugadas por jugador
+            if (jugadasMano.size() == 3 && jugadasPie.size() == 3) {
+                rondaFinalizada = true;
+            }
+
 
             actualizarJugadorActual();
         } else {
@@ -81,12 +94,6 @@ public class Ronda {
             resultadosManos.add(ResultadoParcial.PARDA);
         }
     }
-    public List<Carta> getCartasJugadas(Jugador jugador) {
-        if (jugador == jugadorMano) return jugadasMano;
-        if (jugador == jugadorPie) return jugadasPie;
-        return new ArrayList<>();
-    }
-
 
     private void actualizarJugadorActual() {
         ResultadoParcial ultimo = resultadosManos.get(resultadosManos.size() - 1);
@@ -133,6 +140,16 @@ public class Ronda {
             if (ganadasPie == 2) return jugadorPie;
         }
 
+        // Si se jugaron 3 manos y hay una parda en la última, gana quien ganó la primera
+        if (resultadosManos.size() == 3 && resultadosManos.get(2) == ResultadoParcial.PARDA) {
+            ResultadoParcial primera = resultadosManos.get(0);
+            if (primera == ResultadoParcial.GANA_MANO) return jugadorMano;
+            if (primera == ResultadoParcial.GANA_PIE) return jugadorPie;
+            // Si la primera también fue parda, gana el que es mano
+            return jugadorMano;
+        }
+
+        // Si hay empate general o lógica no contemplada, por regla gana el mano
         return (ganadasMano == ganadasPie) ? jugadorMano : (ganadasMano > ganadasPie ? jugadorMano : jugadorPie);
     }
 
@@ -159,6 +176,61 @@ public class Ronda {
         jugadas.get(jugador).add(carta);
     }
 
+    public void forzarTurno(Jugador jugador) {
+        setJugadorActual(jugador);
+    }
+
+    public void pasarTurno() {
+        jugadorActual = (jugadorActual == jugadorMano) ? jugadorPie : jugadorMano;
+    }
+
+
+    // Enum interno
+    private enum ResultadoParcial {
+        GANA_MANO,
+        GANA_PIE,
+        PARDA
+    }
+
+    public void jugarTurnoConCarta(Jugador jugador, Carta carta) {
+        if (rondaFinalizada) return;
+
+        if (jugador == jugadorMano) {
+            jugadasMano.add(carta);
+        } else {
+            jugadasPie.add(carta);
+        }
+
+        registrarJugada(jugador, carta);
+
+        if (jugadasMano.size() > jugadasPie.size()) {
+            ordenJugadoresPrimeros.add(jugadorMano);
+        } else if (jugadasPie.size() > jugadasMano.size()) {
+            ordenJugadoresPrimeros.add(jugadorPie);
+        }
+
+        if (jugadasMano.size() == jugadasPie.size()) {
+            evaluarMano(jugadasMano.size() - 1);
+
+            if (verificarCierreAnticipado()) {
+                rondaFinalizada = true;
+                return;
+            }
+
+            if (jugadasMano.size() == 3 && jugadasPie.size() == 3) {
+                rondaFinalizada = true;
+            }
+
+            actualizarJugadorActual();
+        } else {
+            cambiarTurno();
+        }
+        this.ultimoJugadorQueJugo = jugador;
+    }
+    public Jugador getUltimoJugadorQueJugo() {
+        return ultimoJugadorQueJugo;
+    }
+
     public Carta obtenerUltimaCartaJugada(Jugador jugador) {
         List<Carta> cartas = jugadas.get(jugador);
         if (cartas != null && !cartas.isEmpty()) {
@@ -167,14 +239,5 @@ public class Ronda {
         return null;
     }
 
-    public void forzarTurno(Jugador jugador) {
-        setJugadorActual(jugador);
-    }
 
-    // Enum interno
-    private enum ResultadoParcial {
-        GANA_MANO,
-        GANA_PIE,
-        PARDA
-    }
 }

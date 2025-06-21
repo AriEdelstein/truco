@@ -1,6 +1,9 @@
 package Truco;
-import Truco.consola.JuegoConsola;
 
+import Truco.consola.JuegoConsola;
+import Truco.vista.VentanaInicio;
+
+import javax.swing.*;
 import java.util.Scanner;
 
 public class Main {
@@ -10,11 +13,11 @@ public class Main {
         System.out.println("🃏 Bienvenido al Truco Argentino");
         System.out.println("¿Cómo querés jugar?");
         System.out.println("1. Consola");
-        System.out.println("2. Gráfico (no implementado aún)");
+        System.out.println("2. Gráfica");
 
         int opcion = -1;
-        while (opcion != 1) {
-            System.out.print("Elegí una opción (1): ");
+        while (opcion != 1 && opcion != 2) {
+            System.out.print("Elegí una opción (1 o 2): ");
             try {
                 opcion = Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
@@ -26,7 +29,7 @@ public class Main {
             JuegoConsola juegoConsola = new JuegoConsola();
             juegoConsola.iniciar();
         } else {
-            System.out.println("🚧 La versión gráfica está en desarrollo.");
+            SwingUtilities.invokeLater(VentanaInicio::new);
         }
 
         scanner.close();

@@ -17,13 +17,19 @@ public class JugadorCPU extends Jugador implements Cantante {
 
     @Override
     public Carta jugarCarta() {
+        if (cartas.isEmpty()) {
+            System.err.println("⚠️ CPU intentó jugar sin cartas.");
+            return null;
+        }
+
         Carta cartaElegida = cartas.stream()
                 .min(Comparator.comparingInt(Carta::getValorTruco))
-                .orElse(null);
+                .orElseThrow(); // ya está chequeado arriba que no está vacío
 
         cartas.remove(cartaElegida);
         return cartaElegida;
     }
+
 
     @Override
     public NivelEnvido deseaCantarEnvido() {
@@ -75,35 +81,38 @@ public class JugadorCPU extends Jugador implements Cantante {
     }
 
     @Override
-    public boolean deseaCantarTruco() {
-        boolean tieneFuerte = cartas.stream().anyMatch(carta -> carta.getValorTruco() <= 4);
-        return tieneFuerte || random.nextInt(100) < 15;
-    }
-
-    @Override
     public boolean deseaAceptarTruco() {
-        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 6) || random.nextBoolean();
+        // Acepta si tiene al menos un 10 o mejor (valor bajo = carta fuerte)
+        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 10);
     }
 
     @Override
-    public boolean deseaCantarRetruco() {
-        return calcularFuerzaCartas() >= 2 || random.nextInt(100) < 20;
+    public boolean deseaAceptarRetruco() {
+        // Acepta si tiene al menos un 6 o mejor
+        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 6);
     }
+
+    @Override
+    public boolean deseaAceptarValeCuatro() {
+        // Acepta si tiene al menos un 3 o mejor
+        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 3);
+    }
+
+
+    @Override
+    public boolean deseaCantarTruco() {
+        // Canta truco solo si tiene una carta muy fuerte (≤4) o con 10% de probabilidad
+        boolean tieneCartaFuerte = cartas.stream().anyMatch(c -> c.getValorTruco() <= 4);
+        return tieneCartaFuerte || random.nextInt(100) < 10;
+    }
+
+
 
     @Override
     public boolean deseaCantarValeCuatro() {
         return calcularFuerzaCartas() >= 3 || random.nextInt(100) < 10;
     }
 
-    @Override
-    public boolean deseaAceptarRetruco() {
-        return calcularFuerzaCartas() >= 2 || random.nextBoolean();
-    }
-
-    @Override
-    public boolean deseaAceptarValeCuatro() {
-        return calcularFuerzaCartas() >= 3;
-    }
 
     public boolean deseaAceptarRetrucoYSubir(Carta cartaJugada) {
         boolean acepta = cartaJugada.getValorTruco() <= 6 || random.nextBoolean();
