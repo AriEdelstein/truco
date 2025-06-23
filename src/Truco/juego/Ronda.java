@@ -140,17 +140,34 @@ public class Ronda {
             if (ganadasPie == 2) return jugadorPie;
         }
 
-        // Si se jugaron 3 manos y hay una parda en la última, gana quien ganó la primera
+        // Si se jugaron 3 manos y la tercera fue parda,
+        // gana quien haya ganado la primera
         if (resultadosManos.size() == 3 && resultadosManos.get(2) == ResultadoParcial.PARDA) {
-            ResultadoParcial primera = resultadosManos.get(0);
-            if (primera == ResultadoParcial.GANA_MANO) return jugadorMano;
-            if (primera == ResultadoParcial.GANA_PIE) return jugadorPie;
-            // Si la primera también fue parda, gana el que es mano
-            return jugadorMano;
+            return switch (resultadosManos.get(0)) {
+                case GANA_MANO -> jugadorMano;
+                case GANA_PIE -> jugadorPie;
+                default -> jugadorMano; // si primera fue parda también
+            };
         }
 
-        // Si hay empate general o lógica no contemplada, por regla gana el mano
-        return (ganadasMano == ganadasPie) ? jugadorMano : (ganadasMano > ganadasPie ? jugadorMano : jugadorPie);
+        // Si se jugaron solo 2 manos:
+        if (resultadosManos.size() == 2) {
+            ResultadoParcial r1 = resultadosManos.get(0);
+            ResultadoParcial r2 = resultadosManos.get(1);
+
+            if ((r1 == ResultadoParcial.GANA_MANO && r2 == ResultadoParcial.PARDA) ||
+                    (r2 == ResultadoParcial.GANA_MANO && r1 == ResultadoParcial.PARDA)) {
+                return jugadorMano;
+            }
+
+            if ((r1 == ResultadoParcial.GANA_PIE && r2 == ResultadoParcial.PARDA) ||
+                    (r2 == ResultadoParcial.GANA_PIE && r1 == ResultadoParcial.PARDA)) {
+                return jugadorPie;
+            }
+        }
+
+        // Si todas fueron pardas o no hay otra forma de desempatar, gana el mano
+        return jugadorMano;
     }
 
     private boolean verificarCierreAnticipado() {
@@ -227,6 +244,7 @@ public class Ronda {
         }
         this.ultimoJugadorQueJugo = jugador;
     }
+
     public Jugador getUltimoJugadorQueJugo() {
         return ultimoJugadorQueJugo;
     }
@@ -238,6 +256,5 @@ public class Ronda {
         }
         return null;
     }
-
 
 }

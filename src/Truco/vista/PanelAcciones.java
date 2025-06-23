@@ -9,18 +9,22 @@ public class PanelAcciones extends JPanel {
     private JButton btnTruco;
     private JButton btnEnvido;
     private JButton btnMazo;
+    private JButton botonSubirTruco;
 
     public PanelAcciones() {
-        setLayout(new GridLayout(3, 1, 10, 10)); // 3 botones verticales
+        setLayout(new GridLayout(4, 1, 10, 10)); // 4 botones verticales
         setBorder(BorderFactory.createTitledBorder("Acciones"));
 
         btnTruco = new JButton("Cantar Truco");
         btnEnvido = new JButton("Cantar Envido");
         btnMazo = new JButton("Irse al Mazo");
+        botonSubirTruco = new JButton("Subir Truco");
+        botonSubirTruco.setEnabled(false); // Inicia deshabilitado
 
         add(btnTruco);
         add(btnEnvido);
         add(btnMazo);
+        add(botonSubirTruco);
     }
 
     // Métodos para registrar listeners desde el controlador
@@ -34,6 +38,10 @@ public class PanelAcciones extends JPanel {
 
     public void setAccionMazo(ActionListener listener) {
         btnMazo.addActionListener(listener);
+    }
+
+    public void setAccionSubirTruco(ActionListener listener) {
+        botonSubirTruco.addActionListener(listener);
     }
 
     // Habilitar/deshabilitar todos los botones
@@ -51,5 +59,10 @@ public class PanelAcciones extends JPanel {
     // Habilitar/deshabilitar solo el botón de Truco
     public void habilitarBotonTruco(boolean habilitar) {
         btnTruco.setEnabled(habilitar);
+    }
+
+    // Habilitar/deshabilitar el botón Subir Truco
+    public void habilitarBotonSubirTruco(boolean habilitar) {
+        botonSubirTruco.setEnabled(habilitar);
     }
 }
