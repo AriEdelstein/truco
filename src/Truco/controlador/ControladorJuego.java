@@ -556,15 +556,21 @@ public class ControladorJuego {
 
     private void finalizarRonda() {
         actualizarPuntuacion();
-        panelMensajes.agregarMensaje("🔁 Repartiendo la proxima mano...");
+        panelMensajes.agregarMensaje("🔁 Repartiendo la próxima mano...");
+
+        // 🚫 Deshabilitar botones de acción del jugador
+        panelAcciones.habilitarAcciones(false);
+
+        // Opcional: también podrías mostrar cartas "sin carta" si querés limpiar la vista
+        panelCartas.mostrarCartas(new String[]{"", "", ""});
 
         truco.reiniciar();
 
-        // Espera 5 segundos antes de iniciar la nueva ronda
         new javax.swing.Timer(5000, e -> {
             ((javax.swing.Timer) e.getSource()).stop();
             iniciarNuevaRonda();
         }).start();
     }
+
 
 }
