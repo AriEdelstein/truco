@@ -24,7 +24,7 @@ public class PanelCartasJugador extends JPanel {
         }
     }
 
-    // Método para actualizar el texto de las cartas mostradas
+    // Metodo para actualizar el texto de las cartas mostradas
     public void mostrarCartas(String[] nombresCartas) {
         for (int i = 0; i < botonesCartas.size(); i++) {
             if (i < nombresCartas.length) {
@@ -51,10 +51,4 @@ public class PanelCartasJugador extends JPanel {
         }
     }
 
-    // Deshabilitar todas las cartas (por turno o si ya se jugó)
-    public void deshabilitarCartas() {
-        for (JButton btn : botonesCartas) {
-            btn.setEnabled(false);
-        }
-    }
 }

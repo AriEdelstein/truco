@@ -9,15 +9,20 @@ import Truco.jugadores.*;
 import java.util.Scanner;
 
 public class Juego {
+    // Jugadores
     private final Jugador jugador1;
     private final Jugador jugador2;
+    // Controlador de puntos
     private final Puntuacion puntuacion;
+    // Mazo de cartas
     private final Mazo mazo;
+    // Jugador mano (empieza la ronda) y pie (va después)
     private Jugador mano;
     private Jugador pie;
 
     private final Scanner scanner = new Scanner(System.in);
 
+    // Constructor: inicializa jugadores, puntuación y mazo
     public Juego(Jugador jugador1, Jugador jugador2) {
         this.jugador1 = jugador1;
         this.jugador2 = jugador2;
@@ -27,24 +32,25 @@ public class Juego {
         this.pie = jugador2;
     }
 
+    // Método principal del juego, ejecuta rondas hasta que haya un ganador
     public void jugar() {
         while (!puntuacion.hayGanador()) {
             System.out.println("\n--- NUEVA RONDA ---");
-            prepararRonda();
-            Ronda ronda = new Ronda(mano, pie);
+            prepararRonda(); // Baraja y reparte cartas
+            Ronda ronda = new Ronda(mano, pie); // Crea una nueva ronda
 
             if (jugador1 instanceof JugadorHumano) {
                 System.out.println("\nTus cartas:");
-                jugador1.mostrarCartas();
+                jugador1.mostrarCartas(); // Muestra cartas al humano
             }
 
-            // === ENVIDO (prioridad para el jugador mano) ===
+            // === CANTO DE ENVIDO ===
             Envido envido = new Envido();
             envido.reiniciar();
 
             boolean envidoOfrecido = false;
 
-            // Solo el jugador mano puede ofrecer envido primero
+            // Solo el jugador mano puede cantar Envido primero
             if (mano instanceof Cantante cantanteMano) {
                 NivelEnvido tipo = cantanteMano.deseaCantarEnvido();
                 if (tipo != NivelEnvido.NINGUNO) {
@@ -56,9 +62,11 @@ public class Juego {
                     }
 
                     Jugador actual = mano;
+                    // Turnos alternados hasta que se acepte o rechace
                     while (!envido.estaAceptado() && !envido.estaRechazado()) {
                         Jugador respuesta = obtenerRival(actual);
 
+                        // Si responde un humano, muestra opciones
                         if (respuesta instanceof JugadorHumano) {
                             System.out.println("\nOpciones para responder Envido:");
                             System.out.println("1. Quiero");
@@ -83,6 +91,7 @@ public class Juego {
                             }
                         } else if (respuesta instanceof JugadorCPU cpu) {
                             int nivel = envido.getNivelEnvido();
+                            // CPU decide si aceptar o no según su estrategia
                             if (cpu.deseaAceptarEnvido(nivel, tipo.ordinal())) {
                                 envido.aceptar();
                             } else {
@@ -94,6 +103,7 @@ public class Juego {
                         actual = obtenerRival(actual);
                     }
 
+                    // Si se aceptó el Envido, se calculan valores y puntos
                     if (envido.estaAceptado()) {
                         int e1 = envido.calcularEnvido(jugador1.getCartas());
                         int e2 = envido.calcularEnvido(jugador2.getCartas());
@@ -110,7 +120,7 @@ public class Juego {
                 }
             }
 
-            // Si la CPU no ofreció envido y el humano es pie, se le pregunta ahora
+            // Si el pie es humano y la CPU no cantó Envido, puede hacerlo ahora
             if (!envidoOfrecido && pie instanceof JugadorHumano && pie instanceof Cantante cantantePie && mano instanceof JugadorCPU) {
                 NivelEnvido tipo = cantantePie.deseaCantarEnvido();
                 if (tipo != NivelEnvido.NINGUNO) {
@@ -125,6 +135,7 @@ public class Juego {
                         Jugador respuesta = obtenerRival(actual);
 
                         if (respuesta instanceof JugadorHumano) {
+                            // mismas opciones que antes
                             System.out.println("\nOpciones para responder Envido:");
                             System.out.println("1. Quiero");
                             System.out.println("2. No quiero");
@@ -175,12 +186,9 @@ public class Juego {
                 }
             }
 
-
-
-            // === TRUCO ===
+            // === CANTO DE TRUCO ===
             Truco truco = new Truco();
             boolean rondaCancelada = false;
-            boolean humanoYaPreguntoTruco = false;
             boolean yaPreguntadoSubirRetruco = false;
 
             while (!ronda.rondaCompleta() && !rondaCancelada) {
@@ -199,6 +207,7 @@ public class Juego {
                         }
                         truco.aceptar();
 
+                        // Posibilidad de subir a Retruco
                         if (preguntarAceptacionHumano(turno, "¿Querés subir a Retruco?")) {
                             truco.subirTruco();
                             if (rival instanceof JugadorCPU cpu && !cpu.deseaAceptarRetruco()) {
@@ -209,6 +218,7 @@ public class Juego {
                             }
                             truco.aceptar();
 
+                            // Posibilidad de que CPU suba a Vale Cuatro
                             if (rival instanceof JugadorCPU cpu && cpu.deseaCantarValeCuatro()) {
                                 truco.subirTruco();
                                 if (!preguntarAceptacionHumano(turno, "Vale Cuatro")) {
@@ -259,7 +269,7 @@ public class Juego {
                     }
                 }
 
-                ronda.jugarTurno();
+                ronda.jugarTurno(); // Se juega el turno actual
             }
 
             if (!rondaCancelada) {
@@ -269,18 +279,19 @@ public class Juego {
                 puntuacion.sumarPuntos(ganadorRonda, puntosTruco);
             }
 
-            puntuacion.mostrarPuntajes();
-            cambiarMano();
+            puntuacion.mostrarPuntajes(); // Muestra puntuaciones actualizadas
+            cambiarMano(); // Alterna quién es mano para la próxima ronda
         }
 
+        // Cuando hay un ganador, termina el juego
         Jugador ganador = puntuacion.obtenerGanador();
         System.out.println("🏆 ¡" + ganador.getNombre() + " ganó la partida con " + ganador.getPuntos() + " puntos!");
     }
 
+    // Pregunta a un jugador humano si acepta el canto
     private boolean preguntarAceptacionHumano(Jugador jugador, String mensaje) {
         String r;
         do {
-            // Si el mensaje ya contiene una pregunta, mostralo tal cual
             if (mensaje.trim().endsWith("?")) {
                 System.out.print(jugador.getNombre() + ", " + mensaje + " (s/n): ");
             } else {
@@ -291,7 +302,7 @@ public class Juego {
         return r.equals("s");
     }
 
-
+    // Reparte cartas a ambos jugadores
     private void prepararRonda() {
         mazo.reiniciar();
         mano.setCartas(mazo.repartirCartas(3));
@@ -300,16 +311,19 @@ public class Juego {
         pie.setEsMano(false);
     }
 
+    // Cambia quién es mano y pie
     private void cambiarMano() {
         Jugador temp = mano;
         mano = pie;
         pie = temp;
     }
 
+    // Devuelve el rival del jugador pasado
     private Jugador obtenerRival(Jugador jugador) {
         return jugador == jugador1 ? jugador2 : jugador1;
     }
 
+    // Determina el ganador del Envido
     private Jugador calcularGanadorEnvido(int e1, int e2) {
         if (e1 == e2) {
             return jugador1.esMano() ? jugador1 : jugador2;
@@ -317,6 +331,7 @@ public class Juego {
         return (e1 > e2) ? jugador1 : jugador2;
     }
 
+    // Devuelve el jugador que debe jugar el turno actual
     private Jugador obtenerJugadorTurno(Ronda ronda) {
         return ronda.getJugadorActual();
     }
@@ -324,14 +339,4 @@ public class Juego {
     public Mazo getMazo() {
         return mazo;
     }
-
-    public Jugador getJugadorMano() {
-        return mano;
-    }
-
-    public Jugador getJugadorPie() {
-        return pie;
-    }
-
-
 }

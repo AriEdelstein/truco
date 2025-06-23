@@ -7,85 +7,88 @@ import Truco.util.Utils;
 import java.util.*;
 
 public class Ronda {
-    private final Jugador jugadorMano;
-    private final Jugador jugadorPie;
+    private final Jugador jugadorMano; // Jugador que comienza la ronda
+    private final Jugador jugadorPie;  // Jugador que va segundo
 
-    private final List<Carta> jugadasMano = new ArrayList<>();
-    private final List<Carta> jugadasPie = new ArrayList<>();
-    private final List<ResultadoParcial> resultadosManos = new ArrayList<>();
-    private final Map<Jugador, List<Carta>> jugadas = new HashMap<>();
+    private final List<Carta> jugadasMano = new ArrayList<>(); // Cartas jugadas por el jugador mano
+    private final List<Carta> jugadasPie = new ArrayList<>();  // Cartas jugadas por el jugador pie
+    private final List<ResultadoParcial> resultadosManos = new ArrayList<>(); // Resultado de cada mano (ronda parcial)
+    private final Map<Jugador, List<Carta>> jugadas = new HashMap<>(); // Mapa jugador → cartas jugadas
 
-    private Jugador ultimoJugadorQueJugo;
-    private Jugador jugadorActual;
-    private Jugador otroJugador;
+    private Jugador ultimoJugadorQueJugo; // Referencia al último jugador que jugó
+    private Jugador jugadorActual;        // Jugador que tiene el turno actual
+    private Jugador otroJugador;          // El otro jugador (no actual)
 
-    private final List<Jugador> ordenJugadoresPrimeros = new ArrayList<>();
-    private boolean rondaFinalizada;
+    private final List<Jugador> ordenJugadoresPrimeros = new ArrayList<>(); // Para definir quién fue primero en cada mano
+    private boolean rondaFinalizada; // Si la ronda ya terminó
 
+    // Constructor: inicializa la ronda con los dos jugadores
     public Ronda(Jugador jugadorMano, Jugador jugadorPie) {
         this.jugadorMano = jugadorMano;
         this.jugadorPie = jugadorPie;
         this.jugadorActual = jugadorMano;
         this.otroJugador = jugadorPie;
-
     }
 
+    // Método principal que permite jugar un turno
     public void jugarTurno() {
         if (rondaFinalizada) return;
 
-        // No permitir que un jugador juegue más cartas que el otro (desfase)
+        // Previene que un jugador juegue más cartas que el otro
         if (jugadorActual == jugadorMano && jugadasMano.size() > jugadasPie.size()) return;
         if (jugadorActual == jugadorPie && jugadasPie.size() > jugadasMano.size()) return;
 
-        Carta jugada = jugadorActual.jugarCarta();
+        Carta jugada = jugadorActual.jugarCarta(); // Jugador juega una carta
         if (jugada == null) {
             System.err.println("⚠️ " + jugadorActual.getNombre() + " no tiene más cartas para jugar.");
             return;
         }
+
         System.out.println("---------------------------------------------");
         System.out.println(jugadorActual.getNombre() + " jugó: " + jugada);
         System.out.println("---------------------------------------------");
 
+        // Guarda la jugada en la lista correspondiente
         if (jugadorActual == jugadorMano) {
             jugadasMano.add(jugada);
         } else {
             jugadasPie.add(jugada);
         }
 
-        registrarJugada(jugadorActual, jugada);
+        registrarJugada(jugadorActual, jugada); // Registra en el mapa general
 
+        // Guarda quién jugó primero en esta mano
         if (jugadasMano.size() > jugadasPie.size()) {
             ordenJugadoresPrimeros.add(jugadorMano);
         } else if (jugadasPie.size() > jugadasMano.size()) {
             ordenJugadoresPrimeros.add(jugadorPie);
         }
 
+        // Si ambos jugadores ya jugaron en esta mano:
         if (jugadasMano.size() == jugadasPie.size()) {
-            evaluarMano(jugadasMano.size() - 1);
+            evaluarMano(jugadasMano.size() - 1); // Evalúa el ganador de la mano actual
 
-            // Verificar si se puede cerrar la ronda anticipadamente
             if (verificarCierreAnticipado()) {
                 rondaFinalizada = true;
                 return;
             }
 
-            // Verificar si se completaron las 3 jugadas por jugador
             if (jugadasMano.size() == 3 && jugadasPie.size() == 3) {
                 rondaFinalizada = true;
             }
 
-
-            actualizarJugadorActual();
+            actualizarJugadorActual(); // Define quién inicia la próxima mano
         } else {
-            cambiarTurno();
+            cambiarTurno(); // Cambia el turno si solo uno jugó
         }
     }
 
+    // Compara las cartas jugadas en una mano y guarda el resultado parcial
     private void evaluarMano(int index) {
         Carta cartaMano = jugadasMano.get(index);
         Carta cartaPie = jugadasPie.get(index);
 
-        int cmp = Utils.compararCartasTruco(cartaMano, cartaPie);
+        int cmp = Utils.compararCartasTruco(cartaMano, cartaPie); // Usa la lógica de jerarquía del Truco
         if (cmp < 0) {
             resultadosManos.add(ResultadoParcial.GANA_PIE);
         } else if (cmp > 0) {
@@ -95,6 +98,7 @@ public class Ronda {
         }
     }
 
+    // Decide quién debe empezar la siguiente mano
     private void actualizarJugadorActual() {
         ResultadoParcial ultimo = resultadosManos.get(resultadosManos.size() - 1);
 
@@ -108,10 +112,12 @@ public class Ronda {
         }
     }
 
+    // Alterna el turno entre jugadores
     private void cambiarTurno() {
         setJugadorActual(otroJugador);
     }
 
+    // Actualiza el jugador actual y el otro
     private void setJugadorActual(Jugador nuevoActual) {
         jugadorActual = nuevoActual;
         otroJugador = (nuevoActual == jugadorMano) ? jugadorPie : jugadorMano;
@@ -121,11 +127,12 @@ public class Ronda {
         return jugadorActual;
     }
 
-
+    // Indica si la ronda se completó (ya se jugaron todas las manos o fue anticipadamente cerrada)
     public boolean rondaCompleta() {
         return rondaFinalizada || (jugadasMano.size() == 3 && jugadasPie.size() == 3);
     }
 
+    // Determina el ganador de la ronda en base a las manos ganadas
     public Jugador determinarGanador() {
         int ganadasMano = 0;
         int ganadasPie = 0;
@@ -140,17 +147,16 @@ public class Ronda {
             if (ganadasPie == 2) return jugadorPie;
         }
 
-        // Si se jugaron 3 manos y la tercera fue parda,
-        // gana quien haya ganado la primera
+        // Si se jugó la tercera mano y fue parda, gana quien ganó la primera
         if (resultadosManos.size() == 3 && resultadosManos.get(2) == ResultadoParcial.PARDA) {
             return switch (resultadosManos.get(0)) {
                 case GANA_MANO -> jugadorMano;
                 case GANA_PIE -> jugadorPie;
-                default -> jugadorMano; // si primera fue parda también
+                default -> jugadorMano; // Si primera también fue parda, gana el mano
             };
         }
 
-        // Si se jugaron solo 2 manos:
+        // En caso de empate parcial (parda + 1 ganada), gana el mano
         if (resultadosManos.size() == 2) {
             ResultadoParcial r1 = resultadosManos.get(0);
             ResultadoParcial r2 = resultadosManos.get(1);
@@ -166,49 +172,56 @@ public class Ronda {
             }
         }
 
-        // Si todas fueron pardas o no hay otra forma de desempatar, gana el mano
+        // Si no se puede determinar por otro criterio, gana el jugador mano
         return jugadorMano;
     }
 
+    // Reglas para cierre anticipado de la ronda
     private boolean verificarCierreAnticipado() {
         if (resultadosManos.size() < 2) return false;
 
         ResultadoParcial r1 = resultadosManos.get(0);
         ResultadoParcial r2 = resultadosManos.get(1);
 
+        // Si la primera fue parda y hay un ganador en la segunda
         if (r1 == ResultadoParcial.PARDA) {
             return r2 == ResultadoParcial.GANA_MANO || r2 == ResultadoParcial.GANA_PIE;
         }
 
+        // Si un jugador ganó ambas, ya no es necesario jugar la tercera
         return r1 == r2 && r1 != ResultadoParcial.PARDA;
     }
 
+    // Muestra las cartas jugadas por cada jugador
     public void mostrarJugadas() {
         System.out.println("\nCartas jugadas por " + jugadorMano.getNombre() + ": " + jugadasMano);
         System.out.println("Cartas jugadas por " + jugadorPie.getNombre() + ": " + jugadasPie + "\n");
     }
 
+    // Registra la carta jugada por un jugador en el mapa general
     public void registrarJugada(Jugador jugador, Carta carta) {
         jugadas.putIfAbsent(jugador, new ArrayList<>());
         jugadas.get(jugador).add(carta);
     }
 
+    // Forzar el turno de un jugador (por ejemplo, si se acepta Truco)
     public void forzarTurno(Jugador jugador) {
         setJugadorActual(jugador);
     }
 
+    // Alterna turno sin verificar lógica de orden
     public void pasarTurno() {
         jugadorActual = (jugadorActual == jugadorMano) ? jugadorPie : jugadorMano;
     }
 
-
-    // Enum interno
+    // Enum para definir el resultado de cada mano
     private enum ResultadoParcial {
         GANA_MANO,
         GANA_PIE,
         PARDA
     }
 
+    // Permite ejecutar jugadas directamente (por interfaz o simulación)
     public void jugarTurnoConCarta(Jugador jugador, Carta carta) {
         if (rondaFinalizada) return;
 
@@ -242,13 +255,16 @@ public class Ronda {
         } else {
             cambiarTurno();
         }
+
         this.ultimoJugadorQueJugo = jugador;
     }
 
+    // Devuelve el último jugador que jugó una carta
     public Jugador getUltimoJugadorQueJugo() {
         return ultimoJugadorQueJugo;
     }
 
+    // Devuelve la última carta jugada por un jugador
     public Carta obtenerUltimaCartaJugada(Jugador jugador) {
         List<Carta> cartas = jugadas.get(jugador);
         if (cartas != null && !cartas.isEmpty()) {
@@ -256,5 +272,4 @@ public class Ronda {
         }
         return null;
     }
-
 }

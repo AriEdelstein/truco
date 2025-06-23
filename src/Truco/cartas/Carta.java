@@ -9,10 +9,6 @@ public class Carta {
         this.palo = palo;
     }
 
-    public int getNumero() {
-        return numero;
-    }
-
     public Palo getPalo() {
         return palo;
     }

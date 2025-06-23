@@ -7,18 +7,22 @@ import java.util.Scanner;
 
 public class JugadorHumano extends Jugador implements Cantante {
 
+    // Scanner para entrada por consola
     private final Scanner scanner = new Scanner(System.in);
 
+    // Constructor: inicializa con nombre
     public JugadorHumano(String nombre) {
         super(nombre);
     }
 
+    // Metodo que permite al jugador humano elegir una carta desde consola
     @Override
     public Carta jugarCarta() {
         System.out.println("\n" + nombre + ", elegí una carta para jugar:");
-        mostrarCartas();
+        mostrarCartas(); // Muestra la mano con numeración
 
         int eleccion = -1;
+        // Solicita una opción válida
         while (eleccion < 1 || eleccion > cartas.size()) {
             System.out.print("Ingresá el número de la carta: ");
             try {
@@ -31,11 +35,13 @@ public class JugadorHumano extends Jugador implements Cantante {
             }
         }
 
+        // Selecciona la carta y la elimina de la mano
         Carta cartaElegida = cartas.get(eleccion - 1);
         cartas.remove(cartaElegida);
         return cartaElegida;
     }
 
+    // Le pregunta al usuario si quiere cantar Envido y cuál
     @Override
     public NivelEnvido deseaCantarEnvido() {
         System.out.println("\n" + nombre + ", ¿Querés cantar Envido?");
@@ -54,26 +60,29 @@ public class JugadorHumano extends Jugador implements Cantante {
         };
     }
 
+    // Pregunta si desea cantar Truco
     @Override
     public boolean deseaCantarTruco() {
         System.out.print(nombre + ", ¿Querés cantar Truco? (s/n): ");
         return scanner.nextLine().trim().equalsIgnoreCase("s");
     }
 
+    // Pregunta si acepta Retruco
     @Override
     public boolean deseaAceptarRetruco() {
         System.out.print(nombre + ", ¿Aceptás el Retruco? (s/n): ");
         return scanner.nextLine().trim().equalsIgnoreCase("s");
     }
 
+    // Pregunta si acepta Vale Cuatro
     @Override
     public boolean deseaAceptarValeCuatro() {
         System.out.print(nombre + ", ¿Aceptás el Vale Cuatro? (s/n): ");
         return scanner.nextLine().trim().equalsIgnoreCase("s");
     }
 
+    // Metodo auxiliar para jugadas desde interfaz gráfica (GUI)
     public Carta jugarCartaDesdeGUI(int indice) {
-        return cartas.remove(indice);
+        return cartas.remove(indice); // Elimina y devuelve la carta elegida por índice
     }
-
 }
