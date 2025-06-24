@@ -31,6 +31,7 @@ public class ControladorJuego {
     private Ronda ronda;
     private final Envido envido = new Envido();
     private final Truco truco = new Truco();
+    private boolean bloquearSubirTruco = false;
 
     public ControladorJuego(PanelCartasJugador panelCartas, PanelAcciones panelAcciones,
                             PanelMensajes panelMensajes, PanelPuntuacion panelPuntuacion) {
@@ -74,7 +75,7 @@ public class ControladorJuego {
 
         Jugador mano = jugadorHumano.esMano() ? jugadorHumano : jugadorCPU;
         Jugador pie = jugadorHumano.esMano() ? jugadorCPU : jugadorHumano;
-
+        bloquearSubirTruco = false;
         ronda = new Ronda(mano, pie);
         truco.reiniciar();
         envido.reiniciar(); // 👈 AGREGADO: reiniciar el estado del envido
@@ -116,19 +117,19 @@ public class ControladorJuego {
         panelCartas.mostrarCartas(nombres);
         actualizarPuntuacion();
 
-        // ✅ El botón debe habilitarse si el humano puede CANTAR o SUBIR el truco (Retruco o Vale Cuatro)
+        // ✅ El botón "Truco" se habilita si puede cantar o subir
         boolean puedeCantar =
                 truco.puedeCantar(jugadorHumano) ||
-                        truco.puedeSubirTruco(jugadorHumano);  // <- Esto permite subir luego
+                        truco.puedeSubirTruco(jugadorHumano);
 
         panelAcciones.habilitarBotonTruco(puedeCantar);
 
-        //poder subir el truco
-        boolean puedeSubirTruco = truco.puedeSubirTruco(jugadorHumano)
-                && truco.estaEnCurso()
-                && truco.estaAceptado();
-
-        panelAcciones.habilitarBotonSubirTruco(puedeSubirTruco);
+        // ✅ El botón "Subir Truco" solo si no está bloqueado
+        if (!bloquearSubirTruco) {
+            boolean puedeSubirTruco = truco.puedeSubirTruco(jugadorHumano)
+                    && !truco.fueCantadoPor(jugadorHumano); // 👈 Este chequeo también suma
+            panelAcciones.habilitarBotonSubirTruco(puedeSubirTruco);
+        }
     }
 
     private void subirTruco() {
@@ -137,8 +138,11 @@ public class ControladorJuego {
 
         if (truco.getNivelActual() == NivelTruco.RETRUCO) {
             if (jugadorCPU.deseaAceptarRetruco()) {
+                panelAcciones.habilitarBotonTruco(false);
+                bloquearSubirTruco = true;
                 truco.aceptar();
                 panelMensajes.agregarMensaje("🤖 CPU aceptó el RETRUCO");
+                panelAcciones.habilitarBotonSubirTruco(false);
             } else {
                 truco.rechazar();
                 jugadorHumano.sumarPuntos(truco.puntosSiNoSeAcepta());
@@ -330,9 +334,13 @@ public class ControladorJuego {
                 panelMensajes.agregarMensaje("🔥 Subiste a Retruco.");
 
                 if (jugadorCPU.deseaAceptarRetruco()) {
+                    bloquearSubirTruco = true;
+                    panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
                     actualizarPuntuacion();
+                    ronda.forzarTurno(jugadorCPU);
+                    SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
                     truco.rechazar();
                     jugadorHumano.sumarPuntos(truco.puntosSiNoSeAcepta());
@@ -445,9 +453,12 @@ public class ControladorJuego {
                 panelMensajes.agregarMensaje("🔥 Subiste a Retruco.");
 
                 if (jugadorCPU.deseaAceptarRetruco()) {
+                    bloquearSubirTruco = true;
+                    panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
                     actualizarPuntuacion();
+                    SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
                     truco.rechazar();
                     jugadorHumano.sumarPuntos(truco.puntosSiNoSeAcepta());
@@ -495,9 +506,12 @@ public class ControladorJuego {
                 panelMensajes.agregarMensaje("🔥 Subiste a Retruco.");
 
                 if (jugadorCPU.deseaAceptarRetruco()) {
+                    bloquearSubirTruco = true;
+                    panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
                     actualizarPuntuacion();
+                    SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
                     truco.rechazar();
                     jugadorHumano.sumarPuntos(truco.puntosSiNoSeAcepta());

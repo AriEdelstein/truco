@@ -98,7 +98,7 @@ public class JugadorCPU extends Jugador implements Cantante {
     @Override
     public boolean deseaAceptarRetruco() {
         // Acepta Retruco si tiene alguna carta ≤ 6
-        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 6);
+        return cartas.stream().anyMatch(c -> c.getValorTruco() <= 8);
     }
 
     @Override
