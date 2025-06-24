@@ -259,17 +259,9 @@ public class Ronda {
         this.ultimoJugadorQueJugo = jugador;
     }
 
-    // Devuelve el último jugador que jugó una carta
-    public Jugador getUltimoJugadorQueJugo() {
-        return ultimoJugadorQueJugo;
+    // Devuelve las cartas jugadas por el jugador humano
+    public List<Carta> getCartasJugadasHumano() {
+        return jugadorMano instanceof Truco.jugadores.JugadorHumano ? jugadasMano : jugadasPie;
     }
 
-    // Devuelve la última carta jugada por un jugador
-    public Carta obtenerUltimaCartaJugada(Jugador jugador) {
-        List<Carta> cartas = jugadas.get(jugador);
-        if (cartas != null && !cartas.isEmpty()) {
-            return cartas.get(cartas.size() - 1);
-        }
-        return null;
-    }
 }

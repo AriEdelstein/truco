@@ -62,4 +62,9 @@ public abstract class Jugador {
             System.out.println((i + 1) + ". " + cartas.get(i));
         }
     }
+
+    public void reiniciarPuntos() {
+        this.puntos = 0;
+    }
+
 }

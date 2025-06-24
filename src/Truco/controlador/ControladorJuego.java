@@ -31,7 +31,9 @@ public class ControladorJuego {
     private Ronda ronda;
     private final Envido envido = new Envido();
     private final Truco truco = new Truco();
+
     private boolean bloquearSubirTruco = false;
+    private static final int PUNTOS_GANADORES = 15;
 
     public ControladorJuego(PanelCartasJugador panelCartas, PanelAcciones panelAcciones,
                             PanelMensajes panelMensajes, PanelPuntuacion panelPuntuacion) {
@@ -115,7 +117,7 @@ public class ControladorJuego {
                 .toArray(String[]::new);
 
         panelCartas.mostrarCartas(nombres);
-        actualizarPuntuacion();
+        verificarFinDelJuego();
 
         // ✅ El botón "Truco" se habilita si puede cantar o subir
         boolean puedeCantar =
@@ -168,12 +170,6 @@ public class ControladorJuego {
         }
 
         actualizarVista();
-    }
-
-
-
-    private void actualizarPuntuacion() {
-        panelPuntuacion.actualizarPuntos(jugadorHumano.getPuntos(), jugadorCPU.getPuntos());
     }
 
     private void cantarTruco() {
@@ -230,7 +226,7 @@ public class ControladorJuego {
             finalizarRonda();
         }
 
-        actualizarPuntuacion();
+        verificarFinDelJuego();
     }
 
     private void cantarEnvido() {
@@ -283,7 +279,7 @@ public class ControladorJuego {
         }
 
         envido.reiniciar();
-        actualizarPuntuacion();
+        verificarFinDelJuego();
 
         if (truco.fueCantadoPor(jugadorCPU) && truco.estaEnCurso() && !truco.estaAceptado() && !truco.estaRechazado()) {
             SwingUtilities.invokeLater(this::mostrarTrucoPendienteCPU); // 👈 vuelve a mostrar el cartel de Truco
@@ -325,7 +321,7 @@ public class ControladorJuego {
             } else if (opcion == 1) {
                 truco.aceptar();
                 panelMensajes.agregarMensaje("✅ Aceptaste el Truco.");
-                actualizarPuntuacion();
+                verificarFinDelJuego();
                 actualizarVista();
 
                 SwingUtilities.invokeLater(this::jugarTurnoCPU);
@@ -338,7 +334,7 @@ public class ControladorJuego {
                     panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
-                    actualizarPuntuacion();
+                    verificarFinDelJuego();
                     ronda.forzarTurno(jugadorCPU);
                     SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
@@ -378,7 +374,7 @@ public class ControladorJuego {
                     envido.rechazar();
                     jugadorCPU.sumarPuntos(envido.puntosSiNoSeAcepta());
                     panelMensajes.agregarMensaje("🙅‍♂️ No quisiste. CPU gana 1 punto.");
-                    actualizarPuntuacion();
+                    verificarFinDelJuego();
                     return;
                 } else if (opcion == 1) {
                     envido.aceptar();
@@ -406,7 +402,7 @@ public class ControladorJuego {
                 }
 
                 envido.reiniciar();
-                actualizarPuntuacion();
+                verificarFinDelJuego();
 
                 if (ronda.rondaCompleta()) {
                     finalizarRonda();
@@ -443,7 +439,7 @@ public class ControladorJuego {
             } else if (opcion == 1) {
                 truco.aceptar();
                 panelMensajes.agregarMensaje("✅ Aceptaste el Truco.");
-                actualizarPuntuacion();
+                verificarFinDelJuego();
                 actualizarVista();
 
                 SwingUtilities.invokeLater(this::jugarTurnoCPU); // 👈 HACE QUE CPU SIGA SU TURNO
@@ -457,7 +453,7 @@ public class ControladorJuego {
                     panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
-                    actualizarPuntuacion();
+                    verificarFinDelJuego();
                     SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
                     truco.rechazar();
@@ -496,7 +492,7 @@ public class ControladorJuego {
             } else if (opcion == 1) {
                 truco.aceptar();
                 panelMensajes.agregarMensaje("✅ Aceptaste el Truco.");
-                actualizarPuntuacion();
+                verificarFinDelJuego();
                 actualizarVista();
 
                 SwingUtilities.invokeLater(this::jugarTurnoCPU); // 👈 HACE QUE CPU SIGA SU TURNO
@@ -510,7 +506,7 @@ public class ControladorJuego {
                     panelAcciones.habilitarBotonSubirTruco(false);
                     truco.aceptar();
                     panelMensajes.agregarMensaje("🤖 CPU aceptó el Retruco.");
-                    actualizarPuntuacion();
+                    verificarFinDelJuego();
                     SwingUtilities.invokeLater(this::jugarTurnoCPU);
                 } else {
                     truco.rechazar();
@@ -563,13 +559,40 @@ public class ControladorJuego {
     }
 
     private void irseAlMazo() {
-        panelMensajes.agregarMensaje("😓 Te fuiste al mazo. CPU gana 1 punto.");
-        jugadorCPU.sumarPuntos(1);
+        int puntosParaCPU;
+        NivelTruco nivel = truco.getNivelActual(); // 👈 aseguramos visibilidad de la variable
+        System.out.println("DEBUG → Nivel: " + nivel + " | Aceptado: " + truco.estaAceptado());
+
+        if (ronda.getCartasJugadasHumano().isEmpty()) {
+            puntosParaCPU = 2;
+            panelMensajes.agregarMensaje("😓 Te fuiste al mazo sin jugar. CPU gana 2 puntos.");
+        } else if (truco.estaEnCurso() && truco.estaAceptado()) {
+            if (nivel == NivelTruco.TRUCO) {
+                puntosParaCPU = 2;
+            } else if (nivel == NivelTruco.RETRUCO) {
+                puntosParaCPU = 3;
+            } else if (nivel == NivelTruco.VALECUATRO) {
+                puntosParaCPU = 4;
+            } else {
+                puntosParaCPU = 1; // Nivel desconocido, por seguridad
+            }
+
+            panelMensajes.agregarMensaje("😓 Te fuiste al mazo durante el " + nivel + ". CPU gana " + puntosParaCPU + " punto(s).");
+        } else {
+            puntosParaCPU = 1;
+            panelMensajes.agregarMensaje("😓 Te fuiste al mazo. CPU gana 1 punto.");
+        }
+
+        jugadorCPU.sumarPuntos(puntosParaCPU);
         finalizarRonda();
     }
 
+
+
+
+
     private void finalizarRonda() {
-        actualizarPuntuacion();
+        verificarFinDelJuego();
         panelMensajes.agregarMensaje("🔁 Repartiendo la próxima mano...");
 
         // 🚫 Deshabilitar botones de acción del jugador
@@ -584,6 +607,31 @@ public class ControladorJuego {
             ((javax.swing.Timer) e.getSource()).stop();
             iniciarNuevaRonda();
         }).start();
+    }
+
+    private void verificarFinDelJuego() {
+        panelPuntuacion.actualizarPuntos(jugadorHumano.getPuntos(), jugadorCPU.getPuntos());
+
+        if (jugadorHumano.getPuntos() >= PUNTOS_GANADORES || jugadorCPU.getPuntos() >= PUNTOS_GANADORES) {
+            String ganador = jugadorHumano.getPuntos() >= PUNTOS_GANADORES ? jugadorHumano.getNombre() : jugadorCPU.getNombre();
+
+            int opcion = JOptionPane.showOptionDialog(null,
+                    "🏁 ¡" + ganador + " ganó el juego!\n¿Querés jugar otra vez?",
+                    "Fin del juego",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null,
+                    new String[]{"Sí, jugar de nuevo", "No, salir"},
+                    "Sí");
+
+            if (opcion == JOptionPane.YES_OPTION) {
+                jugadorHumano.reiniciarPuntos();
+                jugadorCPU.reiniciarPuntos();
+                iniciarNuevaRonda();
+            } else {
+                System.exit(0); // ❌ Cierra la aplicación
+            }
+        }
     }
 
 
